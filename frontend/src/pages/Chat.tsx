@@ -26,7 +26,7 @@ export default function Chat() {
   useEffect(() => {
     let ignore = false;
     const load = async () => {
-      if (!threadId) return;
+      if (!threadId || !self?.id) return;
       setLoading(true);
       try {
         const data: Message[] = await fetchThread(threadId);
@@ -44,9 +44,49 @@ export default function Chat() {
         setLoading(false);
       }
     };
+
+    // Initial load of messages
     load();
-    const int = setInterval(load, 3000); // simple polling; replace with WS later
-    return () => { ignore = true; clearInterval(int); };
+
+    // Set up WebSocket connection
+    if (self?.id) {
+      const ws = new WebSocket(`ws://172.18.12.251:8082/v1/ws?user_id=${self.id}`);
+
+      ws.onopen = () => {
+        console.log('WebSocket connected');
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.type === 'new_message' && data.data.thread_id === threadId) {
+            // Add new message to the list if it's for this thread
+            const newMessage: UIMessage = {
+              id: data.data.id,
+              sender: data.data.sender_id === self.id ? "me" : "other",
+              text: data.data.content,
+              sentAt: data.data.sent_at,
+            };
+            setMsgs(msgs => [...msgs, newMessage]);
+          }
+        } catch (error) {
+          console.error('Failed to parse WebSocket message:', error);
+        }
+      };
+
+      ws.onclose = () => {
+        console.log('WebSocket disconnected');
+        // Attempt to reconnect after a delay if not navigating away
+        if (!ignore) {
+          setTimeout(() => load(), 3000);
+        }
+      };
+
+      return () => {
+        ignore = true;
+        ws.close();
+      };
+    }
   }, [threadId, self?.id]);
 
   const send = async (e: React.FormEvent) => {

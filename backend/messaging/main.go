@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/gorilla/websocket"
 	_ "github.com/lib/pq"
 )
 
@@ -46,6 +47,49 @@ func withCORS(h http.Handler) http.Handler {
 	})
 }
 
+var (
+	upgrader = websocket.Upgrader{
+		ReadBufferSize:  1024,
+		WriteBufferSize: 1024,
+		CheckOrigin: func(r *http.Request) bool {
+			return true // In production, implement proper origin checking
+		},
+	}
+	connManager = NewConnectionManager()
+)
+
+func wsHandler(w http.ResponseWriter, r *http.Request) {
+	userID := r.URL.Query().Get("user_id")
+	if userID == "" {
+		http.Error(w, "missing user_id", http.StatusBadRequest)
+		return
+	}
+
+	conn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Printf("WebSocket upgrade failed: %v", err)
+		return
+	}
+
+	connManager.AddClient(userID, conn)
+	defer func() {
+		connManager.RemoveClient(userID, conn)
+		conn.Close()
+	}()
+
+	for {
+		_, msg, err := conn.ReadMessage()
+		if err != nil {
+			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+				log.Printf("WebSocket read error: %v", err)
+			}
+			break
+		}
+		// Handle incoming WebSocket messages if needed
+		log.Printf("Received WebSocket message from user %s: %s", userID, string(msg))
+	}
+}
+
 func main() {
 	conn := os.Getenv("DB_CONN")
 	if conn != "" {
@@ -76,6 +120,8 @@ func main() {
 	mux.HandleFunc("/v1/threads", listThreadsHandler)
 	// Create or fetch a direct thread for two users
 	mux.HandleFunc("/v1/threads/direct", directThreadHandler)
+	// WebSocket endpoint for real-time updates
+	mux.HandleFunc("/v1/ws", wsHandler)
 
 	// Keep old quick endpoints for local demo compatibility
 	mux.HandleFunc("/send", sendDemoHandler)
@@ -202,9 +248,40 @@ func messagesHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		// Send response to the sender
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(msg)
-		// Emit simple event to stdout — replaceable by Kafka/event bus integration.
+
+		// Notify connected clients in the thread through WebSocket
+		notification, _ := json.Marshal(map[string]interface{}{
+			"type": "new_message",
+			"data": msg,
+		})
+
+		// Get thread members
+		if !useMemory {
+			var members []string
+			rows, err := db.Query(`
+				SELECT user_id FROM thread_members 
+				WHERE thread_id = $1 AND user_id != $2
+			`, msg.ThreadID, msg.SenderID)
+			if err == nil {
+				defer rows.Close()
+				for rows.Next() {
+					var userID string
+					if err := rows.Scan(&userID); err == nil {
+						members = append(members, userID)
+					}
+				}
+				// Update thread members in connection manager
+				connManager.UpdateThreadMembers(msg.ThreadID, members)
+			}
+		}
+
+		// Send real-time notification through WebSocket
+		connManager.SendToThread(msg.ThreadID, notification, msg.SenderID)
+
+		// Log the event
 		log.Printf("message created: id=%s thread=%s sender=%s", msg.ID, msg.ThreadID, msg.SenderID)
 
 	case http.MethodGet:
