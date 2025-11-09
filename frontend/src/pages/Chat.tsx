@@ -53,13 +53,14 @@ export default function Chat() {
     e.preventDefault();
     if (!input.trim() || !self) return;
     try {
+      const API_HOST = import.meta.env.VITE_API_HOST || "localhost";
       // For direct thread we don't know other participant id here; assume thread already exists.
       // To support reply we need recipient id — prototype omits advanced logic.
       const temp: UIMessage = { id: "tmp"+Date.now(), sender: "me", text: input, sentAt: new Date().toISOString() };
       setMsgs([...msgs, temp]);
       setInput("");
       // Backend expects sender + to_id OR thread_id; we have threadId
-      await fetch("http://172.18.12.251:8082/v1/messages", {
+      await fetch(`http://${API_HOST}:8082/v1/messages`, {
         method: "POST",
         headers: {"Content-Type":"application/json"},
         body: JSON.stringify({ sender_id: self.id, thread_id: threadId, content: temp.text })

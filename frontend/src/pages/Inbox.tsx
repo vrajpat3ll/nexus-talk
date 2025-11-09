@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react'
 import { Link, Outlet, useLocation, useParams, useNavigate } from "react-router-dom"
-import Sidebar from "../components/Sidebar"
 import { fetchOrCreateDirectThread, listThreads, ThreadSummary } from "../api"
 
 export default function Inbox() {
@@ -32,7 +31,8 @@ export default function Inbox() {
     const other = prompt("Enter other user's username")
     if (!other) return
     try {
-      const r = await fetch(`http://172.18.12.251:8081/profile/by-username?u=${encodeURIComponent(other)}`)
+      const API_HOST = import.meta.env.VITE_API_HOST || "localhost";
+      const r = await fetch(`http://${API_HOST}:8081/profile/by-username?u=${encodeURIComponent(other)}`)
       if (!r.ok) { alert("User not found"); return }
       const ou = await r.json() as {id:string, username:string}
       const tid = await fetchOrCreateDirectThread(self!.id, ou.id)
@@ -51,7 +51,6 @@ export default function Inbox() {
   }
   return (
     <div className="flex bg-gradient-to-br from-gray-900 via-slate-900 to-gray-900 h-screen overflow-hidden">
-      <Sidebar />
       {/* Chat List Panel - REDESIGNED */}
       <section className="flex flex-col w-80 h-full bg-slate-800/50 backdrop-blur-xl border-r border-slate-700/50 shadow-2xl">
         {/* Header */}

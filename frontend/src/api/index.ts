@@ -1,4 +1,4 @@
-const API_HOST = "172.18.12.251";
+const API_HOST = import.meta.env.VITE_API_HOST || "localhost";
 
 export async function login(username: string, password: string) {
   const r = await fetch(`http://${API_HOST}:8081/login`, {
