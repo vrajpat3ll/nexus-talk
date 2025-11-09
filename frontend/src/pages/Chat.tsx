@@ -111,10 +111,10 @@ export default function Chat() {
   };
 
   return (
-    <div className="flex flex-col h-full bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+    <div className="flex flex-col h-full bg-linear-to-br from-slate-900 via-slate-800 to-slate-900">
       {/* Modern Chat Header */}
       <header className="flex items-center border-b border-slate-700/50 bg-slate-800/50 backdrop-blur-xl px-6 py-4 shadow-lg">
-        <div className="w-11 h-11 rounded-full mr-4 flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold text-lg shadow-lg ring-2 ring-blue-400/30">
+        <div className="w-11 h-11 rounded-full mr-4 flex items-center justify-center bg-linear-to-br from-blue-500 to-purple-600 text-white font-bold text-lg shadow-lg ring-2 ring-blue-400/30">
           {peerUser ? peerUser.username.charAt(0).toUpperCase() : '?'}
         </div>
         <div className="flex-1">
@@ -154,7 +154,7 @@ export default function Chat() {
         
         {msgs.length === 0 && !loading && (
           <div className="flex flex-col items-center justify-center h-full text-center py-12">
-            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-600/20 to-purple-600/20 flex items-center justify-center mb-4">
+            <div className="w-20 h-20 rounded-full bg-linear-to-br from-blue-600/20 to-purple-600/20 flex items-center justify-center mb-4">
               <svg className="w-10 h-10 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
               </svg>
@@ -172,7 +172,7 @@ export default function Chat() {
             }`}
           >
             {m.sender !== "me" && (
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center text-white text-xs font-bold shadow-lg mb-1">
+              <div className="w-8 h-8 rounded-full bg-linear-to-br from-purple-500 to-pink-600 flex items-center justify-center text-white text-xs font-bold shadow-lg mb-1">
                 {peerUser ? peerUser.username.charAt(0).toUpperCase() : '?'}
               </div>
             )}
@@ -181,11 +181,11 @@ export default function Chat() {
               <div
                 className={`rounded-2xl px-5 py-3 shadow-lg backdrop-blur-sm ${
                   m.sender === "me"
-                    ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-br-md"
+                    ? "bg-linear-to-r from-blue-600 to-blue-700 text-white rounded-br-md"
                     : "bg-slate-700/70 text-white rounded-bl-md"
                 }`}
               >
-                <p className="text-base leading-relaxed break-words">{m.text}</p>
+                <p className="text-base leading-relaxed warp-break-word">{m.text}</p>
               </div>
               <span className="text-xs text-gray-500 mt-1 px-1">
                 {new Date(m.sentAt).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}
@@ -193,7 +193,7 @@ export default function Chat() {
             </div>
 
             {m.sender === "me" && (
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white text-xs font-bold shadow-lg mb-1">
+              <div className="w-8 h-8 rounded-full bg-linear-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white text-xs font-bold shadow-lg mb-1">
                 {self?.username.charAt(0).toUpperCase()}
               </div>
             )}
@@ -235,7 +235,7 @@ export default function Chat() {
           <button
             type="submit"
             disabled={!input.trim()}
-            className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white rounded-xl p-2.5 shadow-lg hover:shadow-blue-500/50 transition-all duration-200"
+            className="bg-linear-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white rounded-xl p-2.5 shadow-lg hover:shadow-blue-500/50 transition-all duration-200"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
