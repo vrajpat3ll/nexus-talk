@@ -1,11 +1,15 @@
 FROM golang:1.24-alpine AS build
 WORKDIR /app
-COPY messaging/go.mod messaging/main.go ./
+# Copy entire messaging module
+COPY messaging/ ./messaging
+WORKDIR /app/messaging
+# Ensure dependencies and go.sum entries
 RUN go mod tidy
-RUN go build -o messaging main.go
+# Build binary to root
+RUN go build -o /messaging .
 
 FROM alpine
 WORKDIR /app
-COPY --from=build /app/messaging .
+COPY --from=build /messaging .
 EXPOSE 8082
 CMD ["./messaging"]

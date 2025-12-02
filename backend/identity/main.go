@@ -74,8 +74,18 @@ func main() {
 		if err != nil {
 			log.Fatalf("identity: failed to open DB: %v", err)
 		}
-		if err = db.Ping(); err != nil {
-			log.Fatalf("identity: DB not reachable: %v", err)
+		// Retry ping while Postgres is starting up
+		attempts := 0
+		for {
+			if err = db.Ping(); err == nil {
+				break
+			}
+			attempts++
+			if attempts >= 30 { // ~30s max
+				log.Fatalf("identity: DB not reachable after retries: %v", err)
+			}
+			log.Printf("identity: waiting for DB... (%d)", attempts)
+			time.Sleep(1 * time.Second)
 		}
 		if err := ensureSchema(db); err != nil {
 			log.Fatalf("identity: ensure schema failed: %v", err)

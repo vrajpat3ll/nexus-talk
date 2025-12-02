@@ -61,6 +61,8 @@ func (cm *ConnectionManager) SendToUser(userID string, message []byte) {
 			if err != nil {
 				log.Printf("Error sending message to user %s: %v", userID, err)
 				conn.Close()
+			} else {
+				log.Printf("Sent message to user %s", userID)
 			}
 		}
 	}
@@ -71,6 +73,7 @@ func (cm *ConnectionManager) SendToThread(threadID string, message []byte, exclu
 	userIDs := cm.threads[threadID]
 	cm.RUnlock()
 
+	log.Printf("Broadcasting to thread %s (members: %d)", threadID, len(userIDs))
 	for _, userID := range userIDs {
 		if userID != excludeUserID {
 			cm.SendToUser(userID, message)

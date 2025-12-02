@@ -189,6 +189,11 @@ func messagesHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		if body.SenderID == "" {
+			http.Error(w, "missing sender_id", http.StatusBadRequest)
+			return
+		}
+
 		// If no thread supplied, create a direct thread if to_id is present.
 		threadID := body.ThreadID
 		if threadID == "" && body.ToID != "" {

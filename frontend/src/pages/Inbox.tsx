@@ -11,6 +11,7 @@ export default function Inbox() {
 
   const [threads, setThreads] = useState<ThreadSummary[]>([])
   const [loading, setLoading] = useState(false)
+  const [usernames, setUsernames] = useState<Record<string, string>>({})
 
   useEffect(() => {
     let ignore = false
@@ -26,6 +27,27 @@ export default function Inbox() {
     const int = setInterval(load, 5000)
     return () => { ignore = true; clearInterval(int) }
   }, [self?.id])
+
+  useEffect(() => {
+    // Fetch usernames for thread peers not yet resolved
+    const API_HOST = import.meta.env.VITE_API_HOST || "localhost";
+    const fetchMissing = async () => {
+      const missing = threads
+        .map(t => t.other_user_id)
+        .filter(uid => uid && !usernames[uid])
+      for (const uid of missing) {
+        try {
+          const r = await fetch(`http://${API_HOST}:8081/profile/${uid}`)
+          if (r.ok) {
+            const js = await r.json() as {id:string, username:string}
+            setUsernames(prev => ({...prev, [uid]: js.username}))
+            try { sessionStorage.setItem(`nt_user_${uid}`, js.username) } catch {}
+          }
+        } catch {}
+      }
+    }
+    if (threads.length) fetchMissing()
+  }, [threads])
 
   const newDM = async () => {
     const other = prompt("Enter other user's username")
@@ -101,9 +123,7 @@ export default function Inbox() {
         {/* Thread List - Scrollable */}
         <div className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
           {threads.map((t: ThreadSummary) => {
-            const peerRaw = sessionStorage.getItem(`nt_thread_peer_${t.thread_id}`) || localStorage.getItem(`nt_thread_peer_${t.thread_id}`)
-            let peerName = 'Unknown'
-            if (peerRaw) { try { peerName = JSON.parse(peerRaw).username } catch {} }
+            const peerName = usernames[t.other_user_id] || (sessionStorage.getItem(`nt_user_${t.other_user_id}`) || 'Unknown')
             const active = threadId === t.thread_id
             return (
               <button 
@@ -140,12 +160,21 @@ export default function Inbox() {
                   </p>
                 </div>
 
-                {/* Unread badge (placeholder) */}
-                {!active && Math.random() > 0.7 && (
-                  <div className="flex-shrink-0 w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center">
-                    <span className="text-xs text-white font-bold">2</span>
-                  </div>
-                )}
+                {/* Unread badge: show if last message is newer than last view */}
+                {(() => {
+                  if (active) return null
+                  const lastViewRaw = sessionStorage.getItem(`nt_thread_last_view_${t.thread_id}`)
+                  const lastView = lastViewRaw ? parseInt(lastViewRaw) : 0
+                  const lastMessageTs = new Date(t.last_message_at).getTime()
+                  if (lastMessageTs > lastView) {
+                    return (
+                      <div className="flex-shrink-0 w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center">
+                        <span className="text-xs text-white font-bold">1</span>
+                      </div>
+                    )
+                  }
+                  return null
+                })()}
               </button>
             )
           })}

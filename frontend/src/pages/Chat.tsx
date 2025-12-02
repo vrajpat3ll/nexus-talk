@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { fetchThread, sendMessage, Message } from "../api";
+import { fetchThread, sendMessage, Message, listThreads } from "../api";
 
 interface UIMessage {
   id: string;
@@ -16,12 +16,14 @@ export default function Chat() {
   const [loading, setLoading] = useState(false);
   const userRaw = (typeof sessionStorage !== 'undefined' && sessionStorage.getItem("nt_user")) || localStorage.getItem("nt_user");
   const self = userRaw ? JSON.parse(userRaw) as {id:string, username:string} : null;
-  // Attempt to derive peer user for header (prefer sessionStorage, fallback to localStorage)
-  const peerRaw = threadId
-    ? ((typeof sessionStorage !== 'undefined' && sessionStorage.getItem(`nt_thread_peer_${threadId}`))
-        || localStorage.getItem(`nt_thread_peer_${threadId}`))
-    : null;
-  const peerUser = peerRaw ? JSON.parse(peerRaw) as {id:string, username:string} : null;
+  // Peer user state for header
+  const [peerUser, setPeerUser] = useState<{id:string, username:string} | null>(() => {
+    if (!threadId) return null
+    try {
+      const raw = (typeof sessionStorage !== 'undefined') ? sessionStorage.getItem(`nt_thread_peer_${threadId}`) : null
+      return raw ? JSON.parse(raw) : null
+    } catch { return null }
+  })
 
   useEffect(() => {
     let ignore = false;
@@ -38,6 +40,12 @@ export default function Chat() {
           sentAt: m.sent_at,
         }));
         setMsgs(mapped);
+        // Update last view timestamp for unread tracking
+        try {
+          if (threadId) {
+            sessionStorage.setItem(`nt_thread_last_view_${threadId}`, Date.now().toString())
+          }
+        } catch {}
       } catch(e) {
         console.error("fetchThread failed", e);
       } finally {
@@ -48,9 +56,40 @@ export default function Chat() {
     // Initial load of messages
     load();
 
-    // Set up WebSocket connection
+    // Derive peer user if missing or incorrectly pointing to self
+    const derivePeer = async () => {
+      if (!threadId || !self?.id) return
+      try {
+        const cached = (typeof sessionStorage !== 'undefined') ? sessionStorage.getItem(`nt_thread_peer_${threadId}`) : null
+        if (cached) {
+          const obj = JSON.parse(cached)
+          if (obj?.id && obj.id !== self.id) {
+            setPeerUser(obj)
+            return
+          }
+        }
+        const API_HOST = import.meta.env.VITE_API_HOST || 'localhost'
+        const threads = await listThreads(self.id)
+        const t = threads.find(x => x.thread_id === threadId)
+        if (t && t.other_user_id) {
+          const r = await fetch(`http://${API_HOST}:8081/profile/${t.other_user_id}`)
+          if (r.ok) {
+            const u = await r.json() as {id:string, username:string}
+            setPeerUser(u)
+            try { sessionStorage.setItem(`nt_thread_peer_${threadId}`, JSON.stringify(u)) } catch {}
+          }
+        }
+      } catch (err) {
+        console.warn('derivePeer failed', err)
+      }
+    }
+
+    derivePeer()
+
+    // Set up WebSocket connection (uses same host env as REST)
     if (self?.id) {
-      const ws = new WebSocket(`ws://172.18.12.251:8082/v1/ws?user_id=${self.id}`);
+      const WS_HOST = import.meta.env.VITE_API_HOST || 'localhost'
+      const ws = new WebSocket(`ws://${WS_HOST}:8082/v1/ws?user_id=${self.id}`);
 
       ws.onopen = () => {
         console.log('WebSocket connected');
@@ -59,15 +98,24 @@ export default function Chat() {
       ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-          if (data.type === 'new_message' && data.data.thread_id === threadId) {
-            // Add new message to the list if it's for this thread
-            const newMessage: UIMessage = {
-              id: data.data.id,
-              sender: data.data.sender_id === self.id ? "me" : "other",
-              text: data.data.content,
-              sentAt: data.data.sent_at,
-            };
-            setMsgs(msgs => [...msgs, newMessage]);
+          if (data.type === 'new_message') {
+            // Normalize IDs for comparison (handle potential case differences)
+            const msgThreadId = data.data.thread_id?.toLowerCase();
+            const currentThreadId = threadId?.toLowerCase();
+            
+            if (msgThreadId === currentThreadId) {
+              const newMessage: UIMessage = {
+                id: data.data.id,
+                sender: data.data.sender_id === self.id ? "me" : "other",
+                text: data.data.content,
+                sentAt: data.data.sent_at,
+              };
+              setMsgs(prev => {
+                // Prevent duplicates
+                if (prev.some(m => m.id === newMessage.id)) return prev;
+                return [...prev, newMessage];
+              });
+            }
           }
         } catch (error) {
           console.error('Failed to parse WebSocket message:', error);
