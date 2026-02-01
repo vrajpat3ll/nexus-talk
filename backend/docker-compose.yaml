@@ -1,0 +1,88 @@
+services:
+  gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile.gateway
+    ports:
+      - "8080:8080"
+  identity:
+    build:
+      context: .
+      dockerfile: Dockerfile.identity
+    ports:
+      - "8081:8081"
+    environment:
+      - DB_CONN=postgres://postgres:postgres@db:5432/ntex?sslmode=disable
+    depends_on: [db]
+  messaging:
+    build:
+      context: .
+      dockerfile: Dockerfile.messaging
+    ports:
+      - "8082:8082"
+    environment:
+      - DB_CONN=postgres://postgres:postgres@db:5432/ntex?sslmode=disable
+    depends_on: [db]
+  channels:
+    build:
+      context: .
+      dockerfile: Dockerfile.channels
+    ports:
+      - "8083:8083"
+    depends_on: [db]
+  media:
+    build:
+      context: .
+      dockerfile: Dockerfile.media
+    ports:
+      - "8084:8084"
+    depends_on: [db]
+  rtc:
+    build:
+      context: .
+      dockerfile: Dockerfile.rtc
+    ports:
+      - "8085:8085"
+    depends_on: [db]
+  moderation:
+    build:
+      context: .
+      dockerfile: Dockerfile.moderation
+    ports:
+      - "8086:8086"
+    depends_on: [db]
+  notification:
+    build:
+      context: .
+      dockerfile: Dockerfile.notification
+    ports:
+      - "8087:8087"
+    depends_on: [db]
+  payments:
+    build:
+      context: .
+      dockerfile: Dockerfile.payments
+    ports:
+      - "8088:8088"
+    depends_on: [db]
+  analytics:
+    build:
+      context: .
+      dockerfile: Dockerfile.analytics
+    ports:
+      - "8089:8089"
+    depends_on: [db]
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ntex
+    ports:
+      - "5432:5432"
+    
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:

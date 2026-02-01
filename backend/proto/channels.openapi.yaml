@@ -1,0 +1,48 @@
+openapi: 3.0.1
+info:
+  title: NexusTalk Channels API
+  version: 1.0.0
+paths:
+  /channels:
+    post:
+      summary: Create new channel
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                description: { type: string }
+                is_public: { type: boolean }
+      responses:
+        '201': { description: Channel created }
+    get:
+      summary: List all channels
+      responses:
+        '200': { description: Channel list }
+  /channels/{id}/join:
+    post:
+      summary: Join a channel
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '204': { description: Joined }
+  /channels/{id}/schedule:
+    post:
+      summary: Schedule a post
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                content: { type: string }
+                post_time: { type: string, format: date-time }
+      responses:
+        '201': { description: Post scheduled }

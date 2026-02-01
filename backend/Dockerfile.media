@@ -1,0 +1,10 @@
+FROM golang:1.22-alpine as build
+WORKDIR /app
+COPY media/main.go .
+RUN go mod init nt_media && go mod tidy && go build -o media main.go
+
+FROM alpine
+WORKDIR /app
+COPY --from=build /app/media .
+EXPOSE 8084
+CMD ["./media"]

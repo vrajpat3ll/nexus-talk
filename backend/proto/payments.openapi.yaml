@@ -1,0 +1,58 @@
+openapi: 3.0.1
+info:
+  title: NexusTalk Payments API
+  version: 1.0.0
+paths:
+  /transactions:
+    post:
+      summary: Make a transaction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_id: { type: string }
+                type: { type: string }
+                amount: { type: number }
+                currency: { type: string }
+      responses:
+        '201': { description: Transaction successful }
+    get:
+      summary: List user's transactions
+      parameters:
+        - name: user_id
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: List of transactions }
+  /subscribe:
+    post:
+      summary: Subscribe to a channel
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_id: { type: string }
+                channel_id: { type: string }
+      responses:
+        '201': { description: Subscribed }
+  /unsubscribe:
+    post:
+      summary: Unsubscribe from a channel
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_id: { type: string }
+                channel_id: { type: string }
+      responses:
+        '204': { description: Unsubscribed }

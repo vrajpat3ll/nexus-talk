@@ -1,0 +1,10 @@
+FROM golang:1.22-alpine as build
+WORKDIR /app
+COPY channels/main.go .
+RUN go mod init nt_channels && go mod tidy && go build -o channels main.go
+
+FROM alpine
+WORKDIR /app
+COPY --from=build /app/channels .
+EXPOSE 8083
+CMD ["./channels"]

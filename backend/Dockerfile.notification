@@ -1,0 +1,10 @@
+FROM golang:1.22-alpine as build
+WORKDIR /app
+COPY notification/main.go .
+RUN go mod init nt_notification && go mod tidy && go build -o notification main.go
+
+FROM alpine
+WORKDIR /app
+COPY --from=build /app/notification .
+EXPOSE 8087
+CMD ["./notification"]

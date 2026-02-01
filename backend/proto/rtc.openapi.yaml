@@ -1,0 +1,52 @@
+openapi: 3.0.1
+info:
+  title: NexusTalk RTC API
+  version: 1.0.0
+paths:
+  /calls:
+    post:
+      summary: Start a new call
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                thread_id: { type: string }
+      responses:
+        '201': { description: Call started }
+    get:
+      summary: List all active calls
+      responses:
+        '200': { description: Calls list }
+  /calls/{id}/join:
+    post:
+      summary: Join a call
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '204': { description: Joined call }
+  /calls/{id}/participants:
+    get:
+      summary: Get call participants
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Participants list }
+  /calls/{id}/end:
+    post:
+      summary: End the call
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '204': { description: Call ended }

@@ -1,0 +1,48 @@
+openapi: 3.0.1
+info:
+  title: NexusTalk Identity API
+  version: 1.0.0
+paths:
+  /register:
+    post:
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username: { type: string }
+                phone: { type: string }
+                email: { type: string }
+                password: { type: string }
+      responses:
+        '201':
+          description: Registered
+  /login:
+    post:
+      summary: Login and receive token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username: { type: string }
+                password: { type: string }
+      responses:
+        '200':
+          description: Auth response with JWT
+  /profile/{id}:
+    get:
+      summary: Get user profile
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Profile data

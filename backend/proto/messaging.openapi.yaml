@@ -1,0 +1,45 @@
+openapi: 3.0.1
+info:
+  title: NexusTalk Messaging API
+  version: 1.0.0
+paths:
+  /messages:
+    post:
+      summary: Send message
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                sender_id: { type: string }
+                thread_id: { type: string }
+                content: { type: string }
+      responses:
+        '201': { description: Message sent }
+    get:
+      summary: List messages in a thread
+      parameters:
+        - in: query
+          name: thread_id
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Array of messages }
+  /threads:
+    post:
+      summary: Create new thread
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type: { type: string }
+                member_ids:
+                  type: array
+                  items: { type: string }
+      responses:
+        '201': { description: Thread created }

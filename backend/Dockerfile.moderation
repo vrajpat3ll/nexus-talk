@@ -1,0 +1,10 @@
+FROM golang:1.22-alpine as build
+WORKDIR /app
+COPY moderation/main.go .
+RUN go mod init nt_moderation && go mod tidy && go build -o moderation main.go
+
+FROM alpine
+WORKDIR /app
+COPY --from=build /app/moderation .
+EXPOSE 8086
+CMD ["./moderation"]

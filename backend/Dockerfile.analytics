@@ -1,0 +1,10 @@
+FROM golang:1.22-alpine as build
+WORKDIR /app
+COPY analytics/main.go .
+RUN go mod init nt_analytics && go mod tidy && go build -o analytics main.go
+
+FROM alpine
+WORKDIR /app
+COPY --from=build /app/analytics .
+EXPOSE 8089
+CMD ["./analytics"]

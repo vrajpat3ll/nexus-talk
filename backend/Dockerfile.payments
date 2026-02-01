@@ -1,0 +1,10 @@
+FROM golang:1.22-alpine as build
+WORKDIR /app
+COPY payments/main.go .
+RUN go mod init nt_payments && go mod tidy && go build -o payments main.go
+
+FROM alpine
+WORKDIR /app
+COPY --from=build /app/payments .
+EXPOSE 8088
+CMD ["./payments"]

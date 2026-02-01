@@ -1,0 +1,51 @@
+openapi: 3.0.1
+info:
+  title: NexusTalk Media API
+  version: 1.0.0
+paths:
+  /media:
+    post:
+      summary: Upload media file
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                owner_id:
+                  type: string
+      responses:
+        '201': { description: Uploaded }
+    get:
+      summary: List media by owner
+      parameters:
+        - name: owner_id
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Media list }
+  /media/{id}/thumbnail:
+    get:
+      summary: Get media thumbnail
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Thumbnail image }
+  /media/{id}/block_download:
+    post:
+      summary: Block downloads of file
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '204': { description: Downloads blocked }

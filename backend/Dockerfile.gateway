@@ -1,0 +1,10 @@
+FROM golang:1.22-alpine as build
+WORKDIR /app
+COPY gateway/main.go .
+RUN go mod init nt_gateway && go mod tidy && go build -o gateway main.go
+
+FROM alpine
+WORKDIR /app
+COPY --from=build /app/gateway .
+EXPOSE 8080
+CMD ["./gateway"]

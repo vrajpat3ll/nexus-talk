@@ -1,0 +1,10 @@
+FROM golang:1.22-alpine as build
+WORKDIR /app
+COPY rtc/main.go .
+RUN go mod init nt_rtc && go mod tidy && go build -o rtc main.go
+
+FROM alpine
+WORKDIR /app
+COPY --from=build /app/rtc .
+EXPOSE 8085
+CMD ["./rtc"]

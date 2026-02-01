@@ -1,0 +1,30 @@
+openapi: 3.0.1
+info:
+  title: NexusTalk Analytics API
+  version: 1.0.0
+paths:
+  /events:
+    post:
+      summary: Record an analytics event
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_id: { type: string }
+                event_type: { type: string }
+                metadata: { type: object }
+      responses:
+        '201': { description: Event recorded }
+  /metrics:
+    get:
+      summary: Retrieve all metrics
+      responses:
+        '200': { description: Metrics list }
+  /counters:
+    get:
+      summary: Retrieve all counters
+      responses:
+        '200': { description: Counters list }

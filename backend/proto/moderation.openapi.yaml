@@ -1,0 +1,64 @@
+openapi: 3.0.1
+info:
+  title: NexusTalk Moderation API
+  version: 1.0.0
+paths:
+  /report:
+    post:
+      summary: Report content or user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reporter_id: { type: string }
+                target_id: { type: string }
+                reason_code: { type: string }
+                include_context: { type: boolean }
+      responses:
+        '201': { description: Report created }
+  /block:
+    post:
+      summary: Block a user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                blocker_id: { type: string }
+                blocked_id: { type: string }
+      responses:
+        '201': { description: User blocked }
+  /unblock:
+    post:
+      summary: Unblock a user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                blocker_id: { type: string }
+                blocked_id: { type: string }
+      responses:
+        '204': { description: User unblocked }
+  /strikes:
+    post:
+      summary: Issue strike to user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                moderator_id: { type: string }
+                user_id: { type: string }
+                reason: { type: string }
+      responses:
+        '201': { description: Strike added }

@@ -1,0 +1,43 @@
+openapi: 3.0.1
+info:
+  title: NexusTalk Notification API
+  version: 1.0.0
+paths:
+  /notifications:
+    post:
+      summary: Send notification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_id: { type: string }
+                message: { type: string }
+      responses:
+        '201': { description: Notification sent }
+    get:
+      summary: Get notifications for a user
+      parameters:
+        - name: user_id
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: List of notifications }
+  /register_device:
+    post:
+      summary: Register device for push
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_id: { type: string }
+                device_id: { type: string }
+                push_token: { type: string }
+      responses:
+        '201': { description: Registered device }
